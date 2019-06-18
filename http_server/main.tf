@@ -12,7 +12,7 @@ resource "aws_instance" "default" {
 EOF
 }
 
-resouce "aws_security_group" "default" {
+resource "aws_security_group" "default" {
   name = "ec2"
 
   ingress {

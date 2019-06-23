@@ -1,4 +1,4 @@
-variable "domain_name" {}
+variable "zone_name" {}
 
 resource "aws_lb" "example" {
   name                       = "example"
@@ -25,7 +25,7 @@ resource "aws_lb" "example" {
 }
 
 output "alb_dns_name" {
-  value = aws_lib.example.dns_namw
+  value = aws_lb.example.dns_name
 }
 
 module "http_sg" {
@@ -69,7 +69,7 @@ resource "aws_lb_listener" "http" {
 }
 
 data "aws_route53_zone" "example" {
-  name = var.domain_name
+  name = var.zone_name
 }
 
 resource "aws_route53_record" "example" {
@@ -83,4 +83,27 @@ resource "aws_route53_record" "example" {
     zone_id                = aws_lb.example.zone_id
     evaluate_target_health = true
   }
+}
+
+resource "aws_acm_certificate" "example" {
+  domain_name               = data.aws_route53_zone.example.name
+  subject_alternative_names = []
+  validation_method         = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_route53_record" "example_certificate" {
+  name    = aws_acm_certificate.example.domain_validation_options[0].resource_record_name
+  type    = aws_acm_certificate.example.domain_validation_options[0].resource_record_type
+  records = [aws_acm_certificate.example.domain_validation_options[0].resource_record_value]
+  zone_id = data.aws_route53_zone.example.id
+  ttl     = 60
+}
+
+resource "aws_acm_certificate_validation" "example" {
+  certificate_arn         = aws_acm_certificate.example.arn
+  validation_record_fqdns = [aws_route53_record.example_certificate.fqdn]
 }

@@ -61,7 +61,7 @@ data "aws_iam_policy_document" "alb_log" {
 
     principals {
       type        = "AWS"
-      identifiers = ["${var.account_id}"]
+      identifiers = [var.account_id]
     }
   }
 }
